@@ -1,0 +1,27 @@
+//npx create-expo-app hola-mundo-app --template blank
+//npx expo install react-dom react-native-web
+//npx expo start
+//npm install @react-navigation/native
+//npx expo install react-native-screens react-native-safe-area-context
+//npm install react-native-screens react-native-safe-area-context
+//npm install @react-navigation/native-stack
+
+Flujo de navegacion
+
+Usuario abre app
+   ↓
+usuario = null
+   ↓
+Se muestra Login
+   ↓
+Login correcto
+   ↓
+setUsuario({ email })
+   ↓
+Se habilita la app (Home)
+   ↓
+Logout
+   ↓
+usuario = null
+   ↓
+Vuelve a Login
