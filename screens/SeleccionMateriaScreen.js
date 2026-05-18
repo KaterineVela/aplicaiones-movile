@@ -1,11 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Platform
+  View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AccessibilityContext } from "../context/AccessibilityContext";
@@ -32,16 +27,16 @@ const materias = [
     nombre: "Matemáticas",
     icono: "🔢",
     descripcion: "Álgebra, Geometría y Estadística",
-    disponible: false,
-    color: "#A0A0A0"
+    disponible: true,
+    color: "#F59E0B"
   },
   {
-    id: "lenguaje",
+    id: "lectura",
     nombre: "Lectura Crítica",
     icono: "📖",
     descripcion: "Comprensión lectora y análisis de textos",
-    disponible: false,
-    color: "#A0A0A0"
+    disponible: true,
+    color: "#10B981"
   },
   {
     id: "ciencias",
@@ -71,11 +66,11 @@ export default function SeleccionMateriaScreen({ route, navigation }) {
       hablar(
         `Selecciona una materia para ${esPracticar ? "practicar" : "estudiar"}. ` +
         "Tienes cinco materias en la pantalla. " +
-        "Primera opción, parte superior: Ciencias Sociales, disponible. " +
+        "Primera opción: Ciencias Sociales, disponible. " +
         "Segunda opción: Inglés, disponible. " +
-        "Tercera opción: Matemáticas, próximamente. " +
-        "Cuarta opción: Lectura Crítica, próximamente. " +
-        "Quinta opción, parte inferior: Ciencias Naturales, próximamente."
+        "Tercera opción: Matemáticas, disponible. " +
+        "Cuarta opción: Lectura Crítica, disponible. " +
+        "Quinta opción: Ciencias Naturales, próximamente."
       );
     }
   }, []);
@@ -95,6 +90,8 @@ export default function SeleccionMateriaScreen({ route, navigation }) {
         navigation.navigate("MaterialSociales");
       } else if (materia.id === "ingles") {
         navigation.navigate("MaterialIngles");
+      } else {
+        hablar(`Material de ${materia.nombre} próximamente disponible`);
       }
     }
   };
@@ -123,7 +120,7 @@ export default function SeleccionMateriaScreen({ route, navigation }) {
             onPress={() => seleccionarMateria(materia, index)}
             accessibilityLabel={
               materia.disponible
-                ? `${posiciones[index]}. ${materia.nombre}, ${materia.descripcion}, disponible`
+                ? `${posiciones[index]}. ${materia.nombre}, disponible`
                 : `${posiciones[index]}. ${materia.nombre}, próximamente disponible`
             }
           >
@@ -158,24 +155,16 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web" ? { height: "100vh", overflow: "hidden" } : {})
   },
   header: {
-    padding: 25,
-    paddingTop: 50,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-    flexShrink: 0
+    padding: 25, paddingTop: 50,
+    borderBottomLeftRadius: 25, borderBottomRightRadius: 25, flexShrink: 0
   },
   title: { color: "#fff", fontSize: 24, fontWeight: "bold" },
   subtitle: { color: "#ddd", fontSize: 15, marginTop: 4 },
   scroll: { flex: 1 },
   lista: { padding: 20, gap: 14 },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    elevation: 4,
-    gap: 14
+    backgroundColor: "#fff", borderRadius: 16, padding: 18,
+    flexDirection: "row", alignItems: "center", elevation: 4, gap: 14
   },
   cardDeshabilitada: { backgroundColor: "#F0F0F0", elevation: 1 },
   icono: { fontSize: 32 },

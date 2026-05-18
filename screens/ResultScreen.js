@@ -2,8 +2,6 @@ import React, { useEffect, useContext } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform
 } from "react-native";
-import { preguntas as preguntasSociales } from "../data/preguntas";
-import { preguntasIngles } from "../data/preguntasIngles";
 import { LinearGradient } from "expo-linear-gradient";
 import { AccessibilityContext } from "../context/AccessibilityContext";
 import { AuthContext } from "../context/AuthContext";
@@ -18,22 +16,24 @@ const formatearTiempo = (segundos) => {
   return `${m}m ${s}s`;
 };
 
-export default function ResultScreen({ route, navigation }) {
+const CONFIG = {
+  sociales:    { titulo: "Ciencias Sociales", icono: "🌎", color: ["#7B61FF", "#A78BFA"], barra: "#7B61FF" },
+  ingles:      { titulo: "Inglés",            icono: "🌐", color: ["#0EA5E9", "#38BDF8"], barra: "#0EA5E9" },
+  matematicas: { titulo: "Matemáticas",       icono: "🔢", color: ["#F59E0B", "#FCD34D"], barra: "#F59E0B" },
+  lectura:     { titulo: "Lectura Crítica",   icono: "📖", color: ["#10B981", "#6EE7B7"], barra: "#10B981" },
+};
 
+export default function ResultScreen({ route, navigation }) {
   const respuestas = route?.params?.respuestas ?? [];
   const materia = route?.params?.materia ?? "sociales";
   const tiempoSegundos = route?.params?.tiempoSegundos ?? null;
+  const banco = route?.params?.banco ?? [];
 
-  const banco = materia === "ingles" ? preguntasIngles : preguntasSociales;
-  const tituloMateria = materia === "ingles" ? "Inglés" : "Ciencias Sociales";
-  const iconoMateria = materia === "ingles" ? "🌐" : "🌎";
-  const colorHeader = materia === "ingles" ? ["#0EA5E9", "#38BDF8"] : ["#7B61FF", "#A78BFA"];
-  const colorBarra = materia === "ingles" ? "#0EA5E9" : "#7B61FF";
+  const config = CONFIG[materia] || CONFIG.sociales;
 
   const context = useContext(AccessibilityContext) || {};
   const hablar = context.hablar || (() => {});
   const vozActiva = context.vozActiva || false;
-
   const { usuario } = useContext(AuthContext);
 
   const correctas = respuestas.filter(r => {
@@ -46,7 +46,7 @@ export default function ResultScreen({ route, navigation }) {
     return p?.correcta !== r.respuesta;
   });
 
-  const porcentaje = respuestas.length > 0
+  const porcentaje = banco.length > 0
     ? Math.round((correctas.length / banco.length) * 100)
     : 0;
 
@@ -64,8 +64,7 @@ export default function ResultScreen({ route, navigation }) {
     const guardarResultado = async () => {
       if (!usuario) return;
       try {
-        // 1. Guardar el resultado del quiz
-        const incorrectasIds = incorrectas.map(r => {
+        const incorrectasDetalle = incorrectas.map(r => {
           const p = banco.find(p => p.id === r.id);
           return {
             id: r.id,
@@ -83,11 +82,11 @@ export default function ResultScreen({ route, navigation }) {
           incorrectas: incorrectas.length,
           total: banco.length,
           tiempoSegundos: tiempoSegundos || 0,
-          incorrectasDetalle: incorrectasIds,
+          incorrectasDetalle,
           fecha: serverTimestamp()
         });
 
-        // 2. Actualizar racha de días
+        // Actualizar racha
         const perfilRef = doc(db, "usuarios", usuario.uid, "perfil", "datos");
         const perfilSnap = await getDoc(perfilRef);
         const hoy = new Date().toISOString().split("T")[0];
@@ -97,24 +96,19 @@ export default function ResultScreen({ route, navigation }) {
         if (perfilSnap.exists()) {
           const perfil = perfilSnap.data();
           if (perfil.ultimoDia === hoy) {
-            nuevaRacha = perfil.racha; // ya practicó hoy, no cambia
+            nuevaRacha = perfil.racha;
           } else if (perfil.ultimoDia === ayer) {
-            nuevaRacha = (perfil.racha || 0) + 1; // día consecutivo
-          } else {
-            nuevaRacha = 1; // se rompió la racha
+            nuevaRacha = (perfil.racha || 0) + 1;
           }
           await setDoc(perfilRef, { ...perfil, racha: nuevaRacha, ultimoDia: hoy }, { merge: true });
         } else {
-          // Primer simulacro, crear perfil
           await setDoc(perfilRef, {
             nombre: usuario.displayName || "",
             email: usuario.email || "",
-            racha: 1,
-            ultimoDia: hoy,
+            racha: 1, ultimoDia: hoy,
             fechaRegistro: new Date().toISOString()
           });
         }
-
       } catch (error) {
         console.log("Error guardando resultado:", error);
       }
@@ -125,25 +119,25 @@ export default function ResultScreen({ route, navigation }) {
   useEffect(() => {
     if (vozActiva) {
       hablar(
-        `Pantalla de resultados. Materia: ${tituloMateria}. ` +
-        `Tu puntaje es ${porcentaje} por ciento. ` +
-        `Respondiste ${correctas.length} preguntas correctas y ${incorrectas.length} incorrectas de ${banco.length} en total. ` +
+        `Resultados de ${config.titulo}. Tu puntaje es ${porcentaje} por ciento. ` +
+        `${correctas.length} correctas y ${incorrectas.length} incorrectas de ${banco.length}. ` +
         `Nivel: ${nivelTexto}.`
       );
     }
   }, []);
 
+  const OTRAS = Object.entries(CONFIG).filter(([key]) => key !== materia);
+
   return (
     <View style={styles.wrapper}>
-
-      <LinearGradient colors={colorHeader} style={styles.headerBanner}>
-        <Text style={styles.headerBannerTexto}>{iconoMateria} {tituloMateria}</Text>
-        <Text style={styles.headerBannerSub}>Resultados del simulacro</Text>
+      <LinearGradient colors={config.color} style={styles.headerBanner}>
+        <Text style={styles.headerTexto}>{config.icono} {config.titulo}</Text>
+        <Text style={styles.headerSub}>Resultados del simulacro</Text>
       </LinearGradient>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.container} showsVerticalScrollIndicator={true}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
 
-        <LinearGradient colors={colorCirculo} style={styles.circuloGrande}>
+        <LinearGradient colors={colorCirculo} style={styles.circulo}>
           <Text style={styles.porcentajeGrande}>{porcentaje}%</Text>
           <Text style={styles.nivelTexto}>{nivelTexto}</Text>
         </LinearGradient>
@@ -163,57 +157,31 @@ export default function ResultScreen({ route, navigation }) {
           <Text style={styles.materiaTitulo}>📊 Resultado por materia</Text>
 
           <View style={styles.materiaFila}>
-            <Text style={styles.materiaIcono}>{iconoMateria}</Text>
+            <Text style={styles.materiaIcono}>{config.icono}</Text>
             <View style={styles.materiaInfo}>
-              <Text style={styles.materiaNombre}>{tituloMateria}</Text>
+              <Text style={styles.materiaNombre}>{config.titulo}</Text>
               <View style={styles.barraFondo}>
-                <View style={[styles.barraRelleno, { width: `${porcentaje}%`, backgroundColor: colorBarra }]} />
+                <View style={[styles.barraRelleno, { width: `${porcentaje}%`, backgroundColor: config.barra }]} />
               </View>
             </View>
-            <Text style={[styles.materiaPorcentaje, { color: colorBarra }]}>{porcentaje}%</Text>
+            <Text style={[styles.materiaPorcentaje, { color: config.barra }]}>{porcentaje}%</Text>
           </View>
 
-          {materia !== "sociales" && (
-            <View style={[styles.materiaFila, styles.materiaDeshabilitada]}>
-              <Text style={styles.materiaIcono}>🌎</Text>
+          {OTRAS.map(([key, cfg]) => (
+            <View key={key} style={[styles.materiaFila, styles.materiaDeshabilitada]}>
+              <Text style={styles.materiaIcono}>{cfg.icono}</Text>
               <View style={styles.materiaInfo}>
-                <Text style={[styles.materiaNombre, { color: "#AAA" }]}>Ciencias Sociales</Text>
+                <Text style={[styles.materiaNombre, { color: "#AAA" }]}>{cfg.titulo}</Text>
                 <Text style={styles.proximamente}>Practica para ver tu resultado</Text>
               </View>
             </View>
-          )}
-          {materia !== "ingles" && (
-            <View style={[styles.materiaFila, styles.materiaDeshabilitada]}>
-              <Text style={styles.materiaIcono}>🌐</Text>
-              <View style={styles.materiaInfo}>
-                <Text style={[styles.materiaNombre, { color: "#AAA" }]}>Inglés</Text>
-                <Text style={styles.proximamente}>Practica para ver tu resultado</Text>
-              </View>
-            </View>
-          )}
-          <View style={[styles.materiaFila, styles.materiaDeshabilitada]}>
-            <Text style={styles.materiaIcono}>🔢</Text>
-            <View style={styles.materiaInfo}>
-              <Text style={[styles.materiaNombre, { color: "#AAA" }]}>Matemáticas</Text>
-              <Text style={styles.proximamente}>Próximamente</Text>
-            </View>
-          </View>
-          <View style={[styles.materiaFila, styles.materiaDeshabilitada]}>
-            <Text style={styles.materiaIcono}>📖</Text>
-            <View style={styles.materiaInfo}>
-              <Text style={[styles.materiaNombre, { color: "#AAA" }]}>Lectura Crítica</Text>
-              <Text style={styles.proximamente}>Próximamente</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
         {incorrectas.length > 0 && (
           <TouchableOpacity
             style={styles.btnIncorrectas}
-            onPress={() => {
-              if (vozActiva) hablar(`Ver preguntas incorrectas. Fallaste ${incorrectas.length} preguntas.`);
-              navigation.navigate("PreguntasIncorrectas", { respuestas, incorrectas, materia });
-            }}
+            onPress={() => navigation.navigate("PreguntasIncorrectas", { respuestas, incorrectas, materia, banco })}
           >
             <Text style={styles.btnIncorrectasTexto}>❌ Ver preguntas incorrectas ({incorrectas.length})</Text>
           </TouchableOpacity>
@@ -226,21 +194,15 @@ export default function ResultScreen({ route, navigation }) {
         )}
 
         <TouchableOpacity
-          style={[styles.btnRecomendaciones, { backgroundColor: colorBarra }]}
-          onPress={() => {
-            if (vozActiva) hablar("Abriendo recomendaciones según tu puntaje.");
-            navigation.navigate("Recomendaciones", { porcentaje, respuestas, materia });
-          }}
+          style={[styles.btnRecomendaciones, { backgroundColor: config.barra }]}
+          onPress={() => navigation.navigate("Recomendaciones", { porcentaje, respuestas, materia })}
         >
           <Text style={styles.btnTexto}>📋 Ver recomendaciones</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.btnVolver}
-          onPress={() => {
-            if (vozActiva) hablar("Volviendo al inicio.");
-            navigation.navigate("Home");
-          }}
+          onPress={() => navigation.navigate("Home")}
         >
           <Text style={styles.btnTexto}>🏠 Volver al inicio</Text>
         </TouchableOpacity>
@@ -253,12 +215,12 @@ export default function ResultScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   wrapper: { flex: 1, backgroundColor: "#F5F6FA", ...(Platform.OS === "web" ? { height: "100vh", overflow: "hidden" } : {}) },
-  headerBanner: { paddingTop: 50, paddingBottom: 18, paddingHorizontal: 24, flexShrink: 0 },
-  headerBannerTexto: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  headerBannerSub: { color: "rgba(255,255,255,0.8)", fontSize: 13, marginTop: 2 },
+  headerBanner: { paddingTop: 50, paddingBottom: 18, paddingHorizontal: 24 },
+  headerTexto: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+  headerSub: { color: "rgba(255,255,255,0.8)", fontSize: 13, marginTop: 2 },
   scroll: { flex: 1 },
-  container: { alignItems: "center", padding: 20, paddingBottom: 40, flexGrow: 1 },
-  circuloGrande: { width: 180, height: 180, borderRadius: 90, alignItems: "center", justifyContent: "center", marginTop: 20, marginBottom: 14, elevation: 8 },
+  container: { alignItems: "center", padding: 20, paddingBottom: 40 },
+  circulo: { width: 180, height: 180, borderRadius: 90, alignItems: "center", justifyContent: "center", marginTop: 20, marginBottom: 14, elevation: 8 },
   porcentajeGrande: { fontSize: 48, color: "#fff", fontWeight: "bold" },
   nivelTexto: { color: "#fff", fontSize: 15, fontWeight: "600" },
   resumen: { fontSize: 14, color: "#666", marginBottom: 10 },

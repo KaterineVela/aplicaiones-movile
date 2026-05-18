@@ -1,62 +1,69 @@
 import React, { useContext, useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Switch,
-  ScrollView,
-  Platform
+  View, Text, StyleSheet, TouchableOpacity, Image, Switch, ScrollView, Platform
 } from "react-native";
 import { AccessibilityContext } from "../context/AccessibilityContext";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../context/AuthContext";
+import { db } from "../firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function AjustesScreen({ navigation }) {
   const { vozActiva, toggleVoz, hablar } = useContext(AccessibilityContext);
+  const { usuario, logout } = useContext(AuthContext);
   const [notificaciones, setNotificaciones] = useState(true);
   const [modoOscuro, setModoOscuro] = useState(false);
-  const { usuario, logout } = useContext(AuthContext);  // 👈 agrega esto
+  const [racha, setRacha] = useState(0);
+
+  useEffect(() => {
+    const cargarPerfil = async () => {
+      if (!usuario) return;
+      try {
+        const perfilSnap = await getDoc(doc(db, "usuarios", usuario.uid, "perfil", "datos"));
+        if (perfilSnap.exists()) {
+          setRacha(perfilSnap.data().racha || 0);
+        }
+      } catch (e) {
+        console.log("Error cargando perfil:", e);
+      }
+    };
+    cargarPerfil();
+  }, []);
 
   useEffect(() => {
     if (vozActiva) {
       hablar(
-        "Pantalla de ajustes. Parte superior: tu perfil con foto, nombre y correo. " +
-        "Parte central: tres opciones de configuración. " +
-        "Primera opción: Accesibilidad por voz, actualmente " + (vozActiva ? "activada" : "desactivada") + ". " +
-        "Segunda opción: Notificaciones, actualmente " + (notificaciones ? "activadas" : "desactivadas") + ". " +
-        "Tercera opción: Modo oscuro, actualmente " + (modoOscuro ? "activado" : "desactivado") + ". " +
-        "Parte inferior: botón rojo para cerrar sesión. " +
-        "En la parte inferior de la pantalla están los botones de navegación: Inicio a la izquierda, Resultados en el centro y Ajustes a la derecha."
+        "Pantalla de ajustes. Parte superior: tu perfil con nombre y correo. " +
+        "Parte central: opciones de configuración. " +
+        "Parte inferior: botón rojo para cerrar sesión."
       );
     }
   }, []);
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={true}
-      >
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
 
         {/* PERFIL */}
         <View style={styles.profile}>
           <Image
             source={{ uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7iCHs-4Bpi2tfkr9AkgDkZNvBuOMak7IfmQ&s" }}
             style={styles.avatar}
-            accessibilityLabel="Foto de perfil, parte superior de la pantalla"
           />
-          <TouchableOpacity
-            onPress={() => hablar("Cambiar foto de perfil")}
-            accessibilityLabel="Cambiar foto de perfil"
-          >
+          <TouchableOpacity onPress={() => hablar("Cambiar foto de perfil")}>
             <Text style={styles.changePhoto}>Cambiar foto</Text>
           </TouchableOpacity>
           <Text style={styles.name}>{usuario?.displayName || "Sin nombre"}</Text>
           <Text style={styles.email}>{usuario?.email || ""}</Text>
+
+          {/* RACHA */}
+          {racha > 0 && (
+            <View style={styles.rachaBadge}>
+              <Text style={styles.rachaIcono}>🔥</Text>
+              <Text style={styles.rachaTexto}>{racha} día{racha !== 1 ? "s" : ""} de racha</Text>
+            </View>
+          )}
         </View>
 
         {/* OPCIONES */}
@@ -70,10 +77,9 @@ export default function AjustesScreen({ navigation }) {
               onValueChange={() => {
                 toggleVoz();
                 setTimeout(() => {
-                  if (!vozActiva) hablar("Primera opción, parte central. Voz activada.");
+                  if (!vozActiva) hablar("Voz activada.");
                 }, 200);
               }}
-              accessibilityLabel="Primera opción, parte central. Activar o desactivar accesibilidad por voz"
             />
           </View>
 
@@ -84,9 +90,8 @@ export default function AjustesScreen({ navigation }) {
               value={notificaciones}
               onValueChange={() => {
                 setNotificaciones(!notificaciones);
-                hablar("Segunda opción, parte central. Notificaciones " + (!notificaciones ? "activadas" : "desactivadas"));
+                hablar("Notificaciones " + (!notificaciones ? "activadas" : "desactivadas"));
               }}
-              accessibilityLabel="Segunda opción, parte central. Activar o desactivar notificaciones"
             />
           </View>
 
@@ -97,9 +102,8 @@ export default function AjustesScreen({ navigation }) {
               value={modoOscuro}
               onValueChange={() => {
                 setModoOscuro(!modoOscuro);
-                hablar("Tercera opción, parte central. " + (!modoOscuro ? "Modo oscuro activado" : "Modo claro activado"));
+                hablar(!modoOscuro ? "Modo oscuro activado" : "Modo claro activado");
               }}
-              accessibilityLabel="Tercera opción, parte central. Activar o desactivar modo oscuro"
             />
           </View>
         </View>
@@ -108,10 +112,9 @@ export default function AjustesScreen({ navigation }) {
         <TouchableOpacity
           style={styles.logout}
           onPress={async () => {
-             hablar("Botón cerrar sesión, parte inferior. Cerrando sesión.");
-              await logout();
+            hablar("Cerrando sesión.");
+            await logout();
           }}
-          accessibilityLabel="Botón cerrar sesión, parte inferior de la pantalla"
         >
           <Ionicons name="log-out" size={22} color="#fff" />
           <Text style={styles.logoutText}>Cerrar sesión</Text>
@@ -126,11 +129,7 @@ export default function AjustesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: "#F5F6FA",
-    ...(Platform.OS === "web" ? { height: "100vh", overflow: "hidden" } : {})
-  },
+  wrapper: { flex: 1, backgroundColor: "#F5F6FA", ...(Platform.OS === "web" ? { height: "100vh", overflow: "hidden" } : {}) },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20, flexGrow: 1 },
   profile: { alignItems: "center", marginTop: 40, marginBottom: 10 },
@@ -138,25 +137,12 @@ const styles = StyleSheet.create({
   changePhoto: { color: "#7B61FF", marginTop: 5 },
   name: { fontSize: 18, fontWeight: "bold", marginTop: 10 },
   email: { color: "#666" },
+  rachaBadge: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#FFF3E0", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginTop: 12, borderWidth: 1, borderColor: "#FFB74D" },
+  rachaIcono: { fontSize: 18 },
+  rachaTexto: { color: "#E65100", fontWeight: "bold", fontSize: 14 },
   section: { marginHorizontal: 20, marginTop: 20 },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 10
-  },
+  option: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff", padding: 15, borderRadius: 15, marginBottom: 10 },
   optionText: { flex: 1, marginLeft: 10 },
-  logout: {
-    flexDirection: "row",
-    backgroundColor: "#FF4D4D",
-    margin: 20,
-    padding: 15,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center"
-  },
+  logout: { flexDirection: "row", backgroundColor: "#FF4D4D", margin: 20, padding: 15, borderRadius: 15, justifyContent: "center", alignItems: "center" },
   logoutText: { color: "#fff", marginLeft: 10, fontWeight: "bold" }
 });
