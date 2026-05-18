@@ -16,7 +16,7 @@ export default function BottomNav({ navigation }) {
 
       <TouchableOpacity
         style={styles.item}
-        onPress={() => ir("Home", "Botón Inicio. Parte inferior izquierda. Yendo al inicio.")}
+        onPress={() => ir("Home", "Botón Inicio. Yendo al inicio.")}
         accessibilityLabel="Inicio, botón inferior izquierdo"
       >
         <Ionicons name="home" size={26} color="#7B61FF" />
@@ -25,16 +25,16 @@ export default function BottomNav({ navigation }) {
 
       <TouchableOpacity
         style={styles.item}
-        onPress={() => ir("Resultados", "Botón Resultados. Parte inferior central. Yendo a resultados.")}
-        accessibilityLabel="Resultados, botón inferior central"
+        onPress={() => ir("Progreso", "Botón Progreso. Yendo a tu progreso por materia.")}
+        accessibilityLabel="Progreso, botón inferior central"
       >
-        <Ionicons name="bar-chart" size={26} color="#7B61FF" />
-        <Text style={styles.text}>Resultados</Text>
+        <Ionicons name="trending-up" size={26} color="#7B61FF" />
+        <Text style={styles.text}>Progreso</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.item}
-        onPress={() => ir("Ajustes", "Botón Ajustes. Parte inferior derecha. Yendo a ajustes.")}
+        onPress={() => ir("Ajustes", "Botón Ajustes. Yendo a ajustes.")}
         accessibilityLabel="Ajustes, botón inferior derecho"
       >
         <Ionicons name="settings" size={26} color="#7B61FF" />
@@ -47,19 +47,10 @@ export default function BottomNav({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 15,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderColor: "#eee"
+    flexDirection: "row", justifyContent: "space-around",
+    padding: 15, backgroundColor: "#fff",
+    borderTopWidth: 1, borderColor: "#eee"
   },
-  item: {
-    alignItems: "center"
-  },
-  text: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#7B61FF"
-  }
+  item: { alignItems: "center" },
+  text: { fontSize: 12, textAlign: "center", color: "#7B61FF" }
 });

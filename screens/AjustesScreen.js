@@ -12,11 +12,13 @@ import {
 import { AccessibilityContext } from "../context/AccessibilityContext";
 import BottomNav from "../components/BottomNav";
 import { Ionicons } from "@expo/vector-icons";
+import { AuthContext } from "../context/AuthContext";
 
 export default function AjustesScreen({ navigation }) {
   const { vozActiva, toggleVoz, hablar } = useContext(AccessibilityContext);
   const [notificaciones, setNotificaciones] = useState(true);
   const [modoOscuro, setModoOscuro] = useState(false);
+  const { usuario, logout } = useContext(AuthContext);  // 👈 agrega esto
 
   useEffect(() => {
     if (vozActiva) {
@@ -53,8 +55,8 @@ export default function AjustesScreen({ navigation }) {
           >
             <Text style={styles.changePhoto}>Cambiar foto</Text>
           </TouchableOpacity>
-          <Text style={styles.name}>Usuario Demo</Text>
-          <Text style={styles.email}>usuario@email.com</Text>
+          <Text style={styles.name}>{usuario?.displayName || "Sin nombre"}</Text>
+          <Text style={styles.email}>{usuario?.email || ""}</Text>
         </View>
 
         {/* OPCIONES */}
@@ -105,9 +107,9 @@ export default function AjustesScreen({ navigation }) {
         {/* CERRAR SESIÓN */}
         <TouchableOpacity
           style={styles.logout}
-          onPress={() => {
-            hablar("Botón cerrar sesión, parte inferior. Cerrando sesión.");
-            navigation.navigate("Login");
+          onPress={async () => {
+             hablar("Botón cerrar sesión, parte inferior. Cerrando sesión.");
+              await logout();
           }}
           accessibilityLabel="Botón cerrar sesión, parte inferior de la pantalla"
         >

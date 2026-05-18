@@ -5,7 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Modal
+  Modal,
+  Alert
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { AuthContext } from "../context/AuthContext";
@@ -26,15 +27,26 @@ export default function LoginScreen({ navigation }) {
     }
   }, []);
 
-  const handleLogin = () => {
-    if (!email.trim() || !password) {
-      hablar("Error. Debes completar todos los campos");
-      return;
-    }
+  const handleLogin = async () => {
+   if (!email.trim() || !password) {
+    hablar("Error. Debes completar todos los campos");
+    return;
+  }
+
+  try {
+    await login(email, password);
     hablar("Inicio de sesión exitoso");
     setModalVisible(true);
+  } catch (error) {
+      let mensaje = "Error al iniciar sesión";
+      if (error.code === "auth/user-not-found") mensaje = "No existe una cuenta con ese correo";
+     if (error.code === "auth/wrong-password") mensaje = "Contraseña incorrecta";
+     if (error.code === "auth/invalid-email") mensaje = "El correo no es válido";
+     if (error.code === "auth/invalid-credential") mensaje = "Correo o contraseña incorrectos";
+      hablar(mensaje);
+      Alert.alert("Error", mensaje);
+    }
   };
-
   return (
     <View style={{ flex: 1 }}>
 

@@ -1,20 +1,24 @@
 import React, { useContext, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import BottomNav from "../components/BottomNav";
 import { AccessibilityContext } from "../context/AccessibilityContext";
+import { AuthContext } from "../context/AuthContext";
 
 export default function HomeScreen({ navigation }) {
   const { vozActiva, hablar } = useContext(AccessibilityContext);
+  const { usuario } = useContext(AuthContext);
+
+  const nombre = usuario?.displayName || usuario?.email || "Usuario";
 
   useEffect(() => {
     if (vozActiva) {
       hablar(
-        "Pantalla de inicio. Tienes tres opciones en el centro de la pantalla. " +
+        `Pantalla de inicio. Bienvenido ${nombre}. Tienes tres opciones en el centro de la pantalla. ` +
         "Primera opción, parte superior: Simulacro de Examen, para practicar o estudiar para el ICFES. " +
         "Segunda opción, parte central: Material de Estudio, para revisar contenidos por materia. " +
-        "Tercera opción, parte inferior: Resultados, para ver tu progreso. " +
-        "En la parte inferior de la pantalla hay tres botones de navegación: Inicio a la izquierda, Resultados en el centro, y Ajustes a la derecha."
+        "Tercera opción, parte inferior: Resultados, para ver tu historial de simulacros. " +
+        "En la parte inferior de la pantalla hay tres botones de navegación."
       );
     }
   }, []);
@@ -22,11 +26,8 @@ export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
 
-      <LinearGradient
-        colors={["#7B61FF", "#A78BFA"]}
-        style={styles.header}
-      >
-        <Text style={styles.name}>Bienvenido 👋</Text>
+      <LinearGradient colors={["#7B61FF", "#A78BFA"]} style={styles.header}>
+        <Text style={styles.name}>Bienvenido, {nombre} 👋</Text>
         <Text style={styles.sub}>Continúa tu progreso</Text>
       </LinearGradient>
 
@@ -50,7 +51,7 @@ export default function HomeScreen({ navigation }) {
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
-          if (vozActiva) hablar("Segunda opción, parte central. Abriendo Material de Estudio. Elige una materia para estudiar.");
+          if (vozActiva) hablar("Segunda opción, parte central. Abriendo Material de Estudio.");
           navigation.navigate("SeleccionMateria", { modo: "estudiar" });
         }}
         accessibilityLabel="Segunda opción, parte central. Material de estudio"
@@ -62,50 +63,35 @@ export default function HomeScreen({ navigation }) {
         </View>
       </TouchableOpacity>
 
-      {/* OPCIÓN 3: RESULTADOS */}
+      {/* OPCIÓN 3: RESULTADOS / HISTORIAL */}
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
-          if (vozActiva) hablar("Tercera opción, parte inferior. Abriendo Resultados.");
-          navigation.navigate("Resultados");
+          if (vozActiva) hablar("Tercera opción, parte inferior. Abriendo historial de resultados.");
+          navigation.navigate("Historial");
         }}
-        accessibilityLabel="Tercera opción, parte inferior. Ver resultados"
+        accessibilityLabel="Tercera opción, parte inferior. Ver historial de resultados"
       >
         <Text style={styles.cardIcon}>📊</Text>
         <View style={styles.cardInfo}>
           <Text style={styles.cardTitle}>Resultados</Text>
-          <Text style={styles.cardSub}>Revisa tu progreso por materia</Text>
+          <Text style={styles.cardSub}>Revisa tu historial de simulacros</Text>
         </View>
       </TouchableOpacity>
 
       <BottomNav navigation={navigation} />
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5F6FA",
-    padding: 20
-  },
-  header: {
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 20
-  },
+  container: { flex: 1, backgroundColor: "#F5F6FA", padding: 20 },
+  header: { padding: 20, borderRadius: 20, marginBottom: 20 },
   name: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   sub: { color: "#ddd" },
   card: {
-    backgroundColor: "#fff",
-    padding: 18,
-    borderRadius: 15,
-    marginBottom: 15,
-    elevation: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 15
+    backgroundColor: "#fff", padding: 18, borderRadius: 15,
+    marginBottom: 15, elevation: 5, flexDirection: "row", alignItems: "center", gap: 15
   },
   cardIcon: { fontSize: 28 },
   cardInfo: { flex: 1 },
