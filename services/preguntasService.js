@@ -1,4 +1,4 @@
-const BASE_URL = "http://127.0.0.1:8080";
+const BASE_URL = "https://0f20-2800-484-1285-3415-75d5-989-c293-8341.ngrok-free.app";
 
 const cache = {};
 

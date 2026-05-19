@@ -3,7 +3,7 @@
 // Funciona igual que preguntasService.js: hace un fetch al endpoint REST
 // y guarda el resultado en cache para no repetir la petición innecesariamente.
 
-const BASE_URL = "http://127.0.0.1:8080";
+const BASE_URL = "https://0f20-2800-484-1285-3415-75d5-989-c293-8341.ngrok-free.app";
 
 // Cache en memoria: guarda el material por materia una vez que se descarga.
 // Si el usuario vuelve a la pantalla de material, no hace otra petición al servidor.
