@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, Button, Image, StyleSheet } from 'react-native';
 
+// Tarjeta individual de producto. Muestra imagen, nombre, precio
+// y un botón para ver el detalle. El callback `onVer` lo maneja el padre.
 export default function ProductoItem({ producto, onVer }) {
   return (
     <View style={styles.card}>
@@ -38,6 +40,6 @@ const styles = StyleSheet.create({
   },
   precio: {
     fontSize: 14,
-    marginBottom: 5
+    marginBottom: 5  // pequeño margen antes del botón
   }
 });

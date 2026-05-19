@@ -9,8 +9,11 @@ export default function HomeScreen({ navigation }) {
   const { vozActiva, hablar } = useContext(AccessibilityContext);
   const { usuario } = useContext(AuthContext);
 
+  // Fallback en cadena: nombre > email > "Usuario"
   const nombre = usuario?.displayName || usuario?.email || "Usuario";
 
+  // Descripción completa de la pantalla para usuarios con voz activa.
+  // Incluye posición de cada opción para orientar sin depender de la vista.
   useEffect(() => {
     if (vozActiva) {
       hablar(

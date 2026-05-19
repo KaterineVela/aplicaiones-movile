@@ -12,23 +12,28 @@ import { preguntasIngles } from "../data/preguntasIngles";
 import { AccessibilityContext } from "../context/AccessibilityContext";
 
 export default function PreguntasIncorrectasScreen({ route, navigation }) {
+  // `incorrectas` llega como array de { id, respuesta } desde la pantalla de resultados
   const { incorrectas } = route?.params ?? { incorrectas: [] };
   const materia = route?.params?.materia ?? "sociales";
 
+  // Configuración visual y de contenido según la materia
   const banco = materia === "ingles" ? preguntasIngles : preguntasSociales;
   const tituloMateria = materia === "ingles" ? "Inglés" : "Ciencias Sociales";
   const colorHeader = materia === "ingles" ? "#0EA5E9" : "#F44336";
   const colorAccent = materia === "ingles" ? "#0EA5E9" : "#7B61FF";
 
+  // Fallbacks por si esta pantalla se abre sin el contexto de accesibilidad
   const context = useContext(AccessibilityContext) || {};
   const hablar = context.hablar || (() => {});
   const vozActiva = context.vozActiva || false;
 
+  // Cruza los ids de respuestas incorrectas con el banco para obtener el detalle completo
   const detalle = incorrectas.map(r => {
     const p = banco.find(p => p.id === r.id);
     return { ...p, respuestaUsuario: r.respuesta };
   }).filter(Boolean);
 
+  // Descripción inicial de la pantalla con conteo de errores y estructura de navegación
   useEffect(() => {
     if (vozActiva) {
       hablar(
@@ -41,6 +46,8 @@ export default function PreguntasIncorrectasScreen({ route, navigation }) {
     }
   }, []);
 
+  // Lee la pregunta completa con contexto, la respuesta del usuario y la correcta.
+  // Busca el texto completo de la opción para no leer solo la letra.
   const leerPregunta = (item, index) => {
     const opcionCorrecta = item.opciones.find(o => o.charAt(0) === item.correcta);
     const opcionUsuario = item.opciones.find(o => o.charAt(0) === item.respuestaUsuario);
@@ -92,7 +99,7 @@ export default function PreguntasIncorrectasScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
 
-            {/* Contexto visible si existe */}
+            {/* Solo se muestra si la pregunta tiene contexto adicional (ej: textos de inglés) */}
             {item.contexto && (
               <View style={styles.contextoBox}>
                 <Text style={styles.contextoLabel}>📌 Contexto</Text>
@@ -124,6 +131,7 @@ export default function PreguntasIncorrectasScreen({ route, navigation }) {
                     ]}>
                       <Text style={styles.letraTexto}>{letra}</Text>
                     </View>
+                    {/* op tiene formato "A. texto", se salta la letra y el punto */}
                     <Text style={[
                       styles.opcionTexto,
                       esCorrecta && styles.opcionTextoCorrecta,

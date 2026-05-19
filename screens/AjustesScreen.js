@@ -16,6 +16,7 @@ export default function AjustesScreen({ navigation }) {
   const [modoOscuro, setModoOscuro] = useState(false);
   const [racha, setRacha] = useState(0);
 
+  // Trae la racha del usuario desde Firestore al montar la pantalla.
   useEffect(() => {
     const cargarPerfil = async () => {
       if (!usuario) return;
@@ -31,6 +32,8 @@ export default function AjustesScreen({ navigation }) {
     cargarPerfil();
   }, []);
 
+  // Descripción de pantalla para usuarios con voz activa.
+  // Se dispara una sola vez al entrar, como orientación inicial.
   useEffect(() => {
     if (vozActiva) {
       hablar(
@@ -57,7 +60,7 @@ export default function AjustesScreen({ navigation }) {
           <Text style={styles.name}>{usuario?.displayName || "Sin nombre"}</Text>
           <Text style={styles.email}>{usuario?.email || ""}</Text>
 
-          {/* RACHA */}
+          {/* Solo se muestra si el usuario tiene al menos un día de racha */}
           {racha > 0 && (
             <View style={styles.rachaBadge}>
               <Text style={styles.rachaIcono}>🔥</Text>
@@ -72,6 +75,7 @@ export default function AjustesScreen({ navigation }) {
           <View style={styles.option}>
             <Ionicons name="volume-high" size={22} color="#7B61FF" />
             <Text style={styles.optionText}>Accesibilidad por voz</Text>
+            {/* El timeout da espacio para que el toggle surta efecto antes de hablar */}
             <Switch
               value={vozActiva}
               onValueChange={() => {
@@ -129,6 +133,7 @@ export default function AjustesScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // En web se fuerza height 100vh para evitar scroll doble con el ScrollView interno
   wrapper: { flex: 1, backgroundColor: "#F5F6FA", ...(Platform.OS === "web" ? { height: "100vh", overflow: "hidden" } : {}) },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 20, flexGrow: 1 },

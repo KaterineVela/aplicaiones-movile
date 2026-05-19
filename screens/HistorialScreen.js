@@ -7,6 +7,8 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 import { AuthContext } from "../context/AuthContext";
 
+// Convierte segundos a formato legible (ej: 125 → "2m 5s").
+// Retorna null si el valor es 0 o indefinido, para no mostrar el campo.
 const formatearTiempo = (segundos) => {
   if (!segundos || segundos === 0) return null;
   const m = Math.floor(segundos / 60);
@@ -19,8 +21,9 @@ export default function HistorialScreen({ navigation }) {
   const { usuario } = useContext(AuthContext);
   const [historial, setHistorial] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [seleccionado, setSeleccionado] = useState(null);
+  const [seleccionado, setSeleccionado] = useState(null); // id del card expandido
 
+  // Carga todos los simulacros del usuario ordenados del más reciente al más antiguo.
   useEffect(() => {
     const cargar = async () => {
       if (!usuario) return;
@@ -39,6 +42,7 @@ export default function HistorialScreen({ navigation }) {
     cargar();
   }, []);
 
+  // Convierte el Timestamp de Firestore a fecha legible en formato colombiano.
   const formatearFecha = (timestamp) => {
     if (!timestamp) return "Sin fecha";
     const fecha = timestamp.toDate();
@@ -48,6 +52,7 @@ export default function HistorialScreen({ navigation }) {
     });
   };
 
+  // Verde ≥70%, naranja ≥40%, rojo por debajo de 40%.
   const colorPorcentaje = (p) => p >= 70 ? "#4CAF50" : p >= 40 ? "#FF9800" : "#F44336";
   const iconoMateria = (m) => m === "ingles" ? "🌐" : "🌎";
   const nombreMateria = (m) => m === "ingles" ? "Inglés" : "Ciencias Sociales";
@@ -77,6 +82,7 @@ export default function HistorialScreen({ navigation }) {
 
         {!cargando && historial.map((item) => (
           <View key={item.id}>
+            {/* Tap en la card alterna la vista de preguntas fallidas */}
             <TouchableOpacity
               style={styles.card}
               onPress={() => setSeleccionado(seleccionado === item.id ? null : item.id)}
@@ -142,6 +148,7 @@ export default function HistorialScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // height 100vh en web para evitar scroll doble con el ScrollView interno
   wrapper: { flex: 1, backgroundColor: "#F5F6FA", ...(Platform.OS === "web" ? { height: "100vh", overflow: "hidden" } : {}) },
   header: { paddingTop: 50, paddingBottom: 20, paddingHorizontal: 20 },
   btnBack: { marginBottom: 8 },

@@ -3,9 +3,13 @@ import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AccessibilityContext } from "../context/AccessibilityContext";
 
+// Barra de navegación inferior con soporte de accesibilidad por voz.
+// Recibe `navigation` de React Navigation para moverse entre pantallas.
 export default function BottomNav({ navigation }) {
   const { hablar, vozActiva } = useContext(AccessibilityContext);
 
+  // Navega a la pantalla indicada y, si el modo de voz está activo,
+  // lee en voz alta el texto antes de hacer la transición.
   const ir = (pantalla, texto) => {
     if (vozActiva) hablar(texto);
     navigation.navigate(pantalla);
@@ -45,6 +49,7 @@ export default function BottomNav({ navigation }) {
   );
 }
 
+// Estilos del nav: fila horizontal con separación uniforme y borde superior sutil.
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row", justifyContent: "space-around",

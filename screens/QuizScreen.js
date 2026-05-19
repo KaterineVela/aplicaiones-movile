@@ -7,6 +7,8 @@ import { AccessibilityContext } from "../context/AccessibilityContext";
 import { obtenerPreguntas } from "../services/preguntasService";
 import BottomNav from "../components/BottomNav";
 
+// Descripciones posicionales por materia para que la voz oriente al usuario
+// sin depender de la vista. Inglés usa inglés, el resto en español.
 const posicionesSociales = [
   "primera opción, parte superior izquierda",
   "segunda opción, parte superior derecha",
@@ -28,6 +30,8 @@ const posicionesCastellano = [
   "cuarta opción"
 ];
 
+// Configuración visual y de voz por materia.
+// Centralizar aquí evita condicionales dispersos en el JSX.
 const CONFIG = {
   sociales:     { titulo: "Ciencias Sociales", color: ["#7B61FF", "#A78BFA"], posiciones: posicionesSociales },
   ingles:       { titulo: "English",           color: ["#0EA5E9", "#38BDF8"], posiciones: positionsEnglish  },
@@ -45,10 +49,11 @@ export default function QuizScreen({ route, navigation }) {
   const [index, setIndex] = useState(0);
   const [respuestas, setRespuestas] = useState([]);
 
+  // Ref para medir el tiempo total del simulacro sin depender del estado
   const tiempoInicio = useRef(Date.now());
   const { hablar, vozActiva, toggleVoz } = useContext(AccessibilityContext);
 
-  // Cargar preguntas desde Firebase
+  // Carga las preguntas desde Firebase y resetea el cronómetro.
   useEffect(() => {
     const cargar = async () => {
       setCargando(true);
@@ -64,6 +69,8 @@ export default function QuizScreen({ route, navigation }) {
   const numeroActual = index + 1;
   const totalPreguntas = banco.length;
 
+  // Lee la pregunta completa con opciones cada vez que cambia el índice
+  // o cuando se activa la voz. El contexto se antepone si existe.
   useEffect(() => {
     if (!cargando && vozActiva && preguntaActual) {
       const contexto = preguntaActual.contexto
@@ -81,6 +88,8 @@ export default function QuizScreen({ route, navigation }) {
     }
   }, [index, cargando, vozActiva]);
 
+  // Registra la respuesta y avanza. En la última pregunta calcula el tiempo
+  // total y navega a Resultados pasando todo el estado necesario.
   const seleccionarRespuesta = (opcion) => {
     const letra = opcion.charAt(0);
     if (vozActiva) {
@@ -98,6 +107,7 @@ export default function QuizScreen({ route, navigation }) {
     }
   };
 
+  // Repite la pregunta actual en voz alta sin cambiar el índice.
   const leerPreguntaDeNuevo = () => {
     if (!preguntaActual) return;
     const contexto = preguntaActual.contexto
@@ -113,6 +123,8 @@ export default function QuizScreen({ route, navigation }) {
     }
   };
 
+  // Lee solo el contexto, útil para preguntas largas donde el usuario
+  // quiere repasar el texto sin escuchar toda la pregunta de nuevo.
   const leerContexto = () => {
     if (preguntaActual?.contexto) {
       hablar(esIngles ? `Context: ${preguntaActual.contexto}` : `Contexto: ${preguntaActual.contexto}`);
@@ -177,6 +189,8 @@ export default function QuizScreen({ route, navigation }) {
         </Text>
       </LinearGradient>
 
+      {/* key={index} fuerza remount del ScrollView al cambiar pregunta,
+          reseteando el scroll al tope automáticamente */}
       <ScrollView key={index} style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
         <View style={styles.card}>
 
@@ -213,6 +227,7 @@ export default function QuizScreen({ route, navigation }) {
                 <View style={[styles.letraBadge, { backgroundColor: config.color[0] }]}>
                   <Text style={styles.letraTexto}>{op.charAt(0)}</Text>
                 </View>
+                {/* op tiene formato "A. texto", se salta la letra y el punto */}
                 <Text style={styles.opcionText}>{op.substring(3)}</Text>
               </TouchableOpacity>
             ))}

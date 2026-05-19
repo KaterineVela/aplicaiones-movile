@@ -20,7 +20,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
 
-
+  // Orientación inicial para usuarios con voz activa.
   useEffect(() => {
     if (vozActiva) {
       hablar("Pantalla de inicio de sesión. Ingresa tu correo y contraseña");
@@ -28,42 +28,42 @@ export default function LoginScreen({ navigation }) {
   }, []);
 
   const handleLogin = async () => {
-   if (!email.trim() || !password) {
-    hablar("Error. Debes completar todos los campos");
-    return;
-  }
+    if (!email.trim() || !password) {
+      hablar("Error. Debes completar todos los campos");
+      return;
+    }
 
-  try {
-    await login(email, password);
-    hablar("Inicio de sesión exitoso");
-    setModalVisible(true);
-  } catch (error) {
+    try {
+      await login(email, password);
+      hablar("Inicio de sesión exitoso");
+      setModalVisible(true);
+    } catch (error) {
+      // Firebase devuelve códigos específicos; se mapean a mensajes legibles.
       let mensaje = "Error al iniciar sesión";
       if (error.code === "auth/user-not-found") mensaje = "No existe una cuenta con ese correo";
-     if (error.code === "auth/wrong-password") mensaje = "Contraseña incorrecta";
-     if (error.code === "auth/invalid-email") mensaje = "El correo no es válido";
-     if (error.code === "auth/invalid-credential") mensaje = "Correo o contraseña incorrectos";
+      if (error.code === "auth/wrong-password") mensaje = "Contraseña incorrecta";
+      if (error.code === "auth/invalid-email") mensaje = "El correo no es válido";
+      if (error.code === "auth/invalid-credential") mensaje = "Correo o contraseña incorrectos";
       hablar(mensaje);
       Alert.alert("Error", mensaje);
     }
   };
+
   return (
     <View style={{ flex: 1 }}>
 
-      {/* 🔊 BOTÓN GLOBAL VOZ */}
+      {/* Botón flotante para activar/desactivar voz, visible antes de hacer login */}
       <TouchableOpacity style={styles.audioGlobal} onPress={toggleVoz}>
         <Text style={{ color: "#fff" }}>
           {vozActiva ? "🔊 Voz activada" : "🔇 Activar voz"}
         </Text>
       </TouchableOpacity>
 
-      {/* Fondo */}
       <LinearGradient
         colors={["#7B61FF", "#A78BFA"]}
         style={styles.top}
       />
 
-      {/* Card */}
       <View style={styles.card}>
         <Text style={styles.title}>Sign in</Text>
 
@@ -105,7 +105,8 @@ export default function LoginScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* MODAL */}
+      {/* Modal de confirmación post-login. Se muestra antes de navegar al Home
+          para dar feedback visual y de voz al usuario. */}
       <Modal transparent visible={modalVisible} animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalBox}>
@@ -124,7 +125,6 @@ export default function LoginScreen({ navigation }) {
               style={styles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                login(email);
                 navigation.navigate("Home");
               }}
               accessibilityLabel="Continuar al inicio"
@@ -143,6 +143,7 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // Posición absoluta para que el botón de voz quede accesible sobre el gradiente
   audioGlobal: {
     position: "absolute",
     top: 50,
@@ -157,6 +158,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40
   },
+  // La card flota sobre el gradiente con position absolute y top calculado
   card: {
     position: "absolute",
     top: 180,

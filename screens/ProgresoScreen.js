@@ -12,6 +12,8 @@ import BottomNav from "../components/BottomNav";
 
 const { width } = Dimensions.get("window");
 
+// Las dos primeras materias están activas; las dos últimas se muestran
+// pero deshabilitadas con la etiqueta "Próximamente".
 const MATERIAS = [
   { key: "sociales",     nombre: "Ciencias Sociales", icono: "🌎", color: "#7B61FF", gradiente: ["#7B61FF", "#A78BFA"] },
   { key: "ingles",       nombre: "Inglés",             icono: "🌐", color: "#0EA5E9", gradiente: ["#0EA5E9", "#38BDF8"] },
@@ -19,6 +21,7 @@ const MATERIAS = [
   { key: "lectura",      nombre: "Lectura Crítica",    icono: "📖", color: "#10B981", gradiente: ["#10B981", "#6EE7B7"], proximamente: true },
 ];
 
+// Igual que en HistorialScreen: retorna null si el tiempo es 0 para no mostrar el campo.
 const formatearTiempo = (s) => {
   if (!s || s === 0) return null;
   const m = Math.floor(s / 60);
@@ -26,6 +29,8 @@ const formatearTiempo = (s) => {
   return m === 0 ? `${sec}s` : `${m}m ${sec}s`;
 };
 
+// Barra de progreso que anima desde 0% hasta el porcentaje dado.
+// El delay permite escalonar la animación si hay varias barras en pantalla.
 function BarraAnimada({ porcentaje, color, delay = 0 }) {
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -58,6 +63,8 @@ const barStyles = StyleSheet.create({
   label: { position: "absolute", right: 0, top: -18, fontSize: 12, fontWeight: "bold" },
 });
 
+// Tarjeta de materia con expansión animada. Cuando está activa muestra
+// el detalle completo: barra animada, stats en círculos y mini historial.
 function TarjetaMateria({ mat, datos, activa, onPress, hablar, vozActiva }) {
   const alturaAnim = useRef(new Animated.Value(activa ? 1 : 0)).current;
 
@@ -74,6 +81,7 @@ function TarjetaMateria({ mat, datos, activa, onPress, hablar, vozActiva }) {
   const colorNivel = porcentaje >= 70 ? "#4CAF50" : porcentaje >= 40 ? "#FF9800" : "#F44336";
   const nivelTexto = porcentaje >= 70 ? "Excelente" : porcentaje >= 40 ? "En progreso" : "Por mejorar";
 
+  // Lee el resumen de la materia al tocar, si la voz está activa.
   const handlePress = () => {
     if (vozActiva) {
       if (tieneData) {
@@ -127,6 +135,7 @@ function TarjetaMateria({ mat, datos, activa, onPress, hablar, vozActiva }) {
           )}
         </View>
 
+        {/* Barra compacta visible cuando la tarjeta está cerrada */}
         {tieneData && !activa && (
           <View style={styles.barraMini}>
             <View style={[styles.barraMiniRelleno, { width: `${porcentaje}%`, backgroundColor: mat.color }]} />
@@ -174,6 +183,7 @@ function TarjetaMateria({ mat, datos, activa, onPress, hablar, vozActiva }) {
               )}
             </View>
 
+            {/* Mini historial: máximo 5 intentos, del más reciente al más antiguo */}
             {datos.historial && datos.historial.length > 1 && (
               <View style={styles.historialMini}>
                 <Text style={styles.historialTitulo}>Últimos intentos</Text>
@@ -204,8 +214,10 @@ export default function ProgresoScreen({ navigation }) {
   const [progreso, setProgreso] = useState({});
   const [racha, setRacha] = useState(0);
   const [cargando, setCargando] = useState(true);
-  const [activa, setActiva] = useState(null);
+  const [activa, setActiva] = useState(null); // key de la tarjeta expandida
 
+  // Carga la racha del perfil y calcula las stats por materia desde los resultados.
+  // El historial se guarda en orden cronológico inverso (más reciente primero).
   useEffect(() => {
     const cargar = async () => {
       if (!usuario) return;
@@ -217,6 +229,7 @@ export default function ProgresoScreen({ navigation }) {
         const snap = await getDocs(ref);
         const datos = snap.docs.map(d => d.data());
 
+        // Agrupa los resultados por materia antes de calcular stats
         const agrupado = {};
         datos.forEach(item => {
           if (!agrupado[item.materia]) agrupado[item.materia] = [];
@@ -250,7 +263,8 @@ export default function ProgresoScreen({ navigation }) {
     cargar();
   }, []);
 
-  // Descripción por voz cuando carga
+  // Descripción por voz una vez que terminan de cargar los datos.
+  // Cambia el mensaje según si el usuario ya tiene simulacros o no.
   useEffect(() => {
     if (!cargando && vozActiva) {
       const totalIntentos = Object.values(progreso).reduce((a, b) => a + b.intentos, 0);
@@ -272,6 +286,7 @@ export default function ProgresoScreen({ navigation }) {
     ? Math.round(Object.values(progreso).reduce((a, b) => a + b.promedio, 0) / materiasPracticadas)
     : null;
 
+  // Alterna la tarjeta expandida; tocar la activa la cierra.
   const handleTarjeta = (key) => {
     setActiva(prev => prev === key ? null : key);
   };
