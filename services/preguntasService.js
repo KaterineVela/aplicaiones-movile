@@ -1,4 +1,4 @@
-const BASE_URL = "https://0f20-2800-484-1285-3415-75d5-989-c293-8341.ngrok-free.app";
+const BASE_URL = "https://3ade-186-102-47-6.ngrok-free.app";
 
 const cache = {};
 
